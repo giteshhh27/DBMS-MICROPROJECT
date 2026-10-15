@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Log{% endblock %}
+{% block header_title %}Database &mdash; Trigger Audit Log{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title"><span>🛡️</span> Database Trigger Activity Log</h2>
+      <p class="form-help">
+        Logged automatically by MySQL Trigger <code>trg_return_audit</code> (AFTER UPDATE ON <code>Book_Issues</code>).
+      </p>
+    </div>
+    <span class="badge badge-info">{{ logs|length }} Audit Record{{ 's' if logs|length != 1 else '' }}</span>
+  </div>
+
+  <div class="actions-bar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="form-control" placeholder="Search audit trail..." data-table-search="auditTable">
+    </div>
+  </div>
+
+  {% if logs %}
+  <div class="table-responsive">
+    <table class="data-table" id="auditTable">
+      <thead>
+        <tr>
+          <th>Log ID</th>
+          <th>Action Description</th>
+          <th>Event Timestamp</th>
+          <th>Trigger Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in logs %}
+        <tr>
+          <td><strong>#{{ l.Log_ID }}</strong></td>
+          <td>
+            <div style="font-weight: 600; color: var(--dark);">{{ l.Action_Description }}</div>
+          </td>
+          <td>{{ l.Log_Time }}</td>
+          <td>
+            <span class="badge badge-success">AFTER UPDATE (trg_return_audit)</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🛡️</div>
+    <h3>No Audit Records Yet</h3>
+    <p>Return a book in the circulation desk to see trigger <code>trg_return_audit</code> automatically log the event here.</p>
+    <a href="{{ url_for('return_book') }}" class="btn btn-primary" style="margin-top: 1rem;">Go to Return Desk</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

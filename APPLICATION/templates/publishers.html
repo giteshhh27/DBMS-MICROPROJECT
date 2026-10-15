@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Publishers{% endblock %}
+{% block header_title %}Catalog &mdash; Manage Publishers{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title"><span>🏢</span> Book Publishers</h2>
+      <p class="form-help">Manage book publishers and printing houses. Unique constraint enforced on publisher email.</p>
+    </div>
+    <button type="button" class="btn btn-primary" data-open-modal="addPublisherModal">
+      <span>➕</span> Add Publisher
+    </button>
+  </div>
+
+  <div class="actions-bar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="form-control" placeholder="Search publisher name, email..." data-table-search="publishersTable">
+    </div>
+    <span class="badge badge-info">{{ publishers|length }} Publishers</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="data-table" id="publishersTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Publisher Name</th>
+          <th>Email Address</th>
+          <th>Phone</th>
+          <th>Address</th>
+          <th>Published Books</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in publishers %}
+        <tr>
+          <td><strong>#{{ p.Publisher_ID }}</strong></td>
+          <td><strong>{{ p.Publisher_Name }}</strong></td>
+          <td>{{ p.Publisher_Email }}</td>
+          <td>{{ p.Publisher_Phone if p.Publisher_Phone else '&mdash;'|safe }}</td>
+          <td>{{ p.Publisher_Address if p.Publisher_Address else '&mdash;'|safe }}</td>
+          <td><span class="badge badge-secondary">{{ p.book_count }} title{{ 's' if p.book_count != 1 else '' }}</span></td>
+          <td>
+            <div style="display: flex; gap: 0.4rem;">
+              <button type="button" 
+                      class="btn btn-sm btn-outline"
+                      data-open-modal="editPublisherModal"
+                      data-param-publisher_id="{{ p.Publisher_ID }}"
+                      data-param-name="{{ p.Publisher_Name }}"
+                      data-param-email="{{ p.Publisher_Email }}"
+                      data-param-phone="{{ p.Publisher_Phone }}"
+                      data-param-address="{{ p.Publisher_Address }}">
+                ✏️ Edit
+              </button>
+              <form method="POST" action="{{ url_for('delete_publisher', publisher_id=p.Publisher_ID) }}" onsubmit="return confirm('Delete publisher: {{ p.Publisher_Name }}?');">
+                <button type="submit" class="btn btn-sm btn-outline" style="color: var(--danger); border-color: var(--danger-border);">
+                  🗑️
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADD PUBLISHER MODAL -->
+<div class="modal-overlay" id="addPublisherModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><span>➕</span> Add New Publisher</h3>
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('add_publisher') }}" data-validate>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" for="add_pub_name">Publisher Name <span class="required">*</span></label>
+          <input type="text" name="name" id="add_pub_name" class="form-control" placeholder="e.g. Oxford University Press" required>
+        </div>
+        <div class="form-grid" style="margin-bottom: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="add_pub_email">Email Address <span class="required">*</span></label>
+            <input type="email" name="email" id="add_pub_email" class="form-control" placeholder="info@oup.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="add_pub_phone">Phone</label>
+            <input type="tel" name="phone" id="add_pub_phone" class="form-control" placeholder="9876543210">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="add_pub_addr">Address</label>
+          <input type="text" name="address" id="add_pub_addr" class="form-control" placeholder="Oxford, UK">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Publisher</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT PUBLISHER MODAL -->
+<div class="modal-overlay" id="editPublisherModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><span>✏️</span> Edit Publisher</h3>
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('edit_publisher') }}" data-validate>
+      <div class="modal-body">
+        <input type="hidden" name="publisher_id" value="">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" for="edit_pub_name">Publisher Name <span class="required">*</span></label>
+          <input type="text" name="name" id="edit_pub_name" class="form-control" required>
+        </div>
+        <div class="form-grid" style="margin-bottom: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="edit_pub_email">Email Address <span class="required">*</span></label>
+            <input type="email" name="email" id="edit_pub_email" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit_pub_phone">Phone</label>
+            <input type="tel" name="phone" id="edit_pub_phone" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_pub_addr">Address</label>
+          <input type="text" name="address" id="edit_pub_addr" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Publisher</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

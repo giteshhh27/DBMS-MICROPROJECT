@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Return a Book{% endblock %}
+{% block header_title %}Circulation Desk &mdash; Return Book{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title"><span>🔄</span> Active Book Loans</h2>
+      <p class="form-help">All books currently checked out to members. Live fines are calculated automatically based on today's date (Rs. 5.00/day late).</p>
+    </div>
+    <span class="badge badge-info">{{ loans|length }} Active Loan{{ 's' if loans|length != 1 else '' }}</span>
+  </div>
+
+  <div class="actions-bar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="form-control" placeholder="Search by member, title, or ID..." data-table-search="activeLoansTable">
+    </div>
+    <a href="{{ url_for('issue_book') }}" class="btn btn-primary btn-sm"><span>📖</span> Issue New Book</a>
+  </div>
+
+  {% if loans %}
+  <div class="table-responsive">
+    <table class="data-table" id="activeLoansTable">
+      <thead>
+        <tr>
+          <th>Issue ID</th>
+          <th>Book Title</th>
+          <th>Borrower</th>
+          <th>Issue Date</th>
+          <th>Due Date</th>
+          <th>Loan Status</th>
+          <th>Fine If Returned Today</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for loan in loans %}
+        <tr>
+          <td><strong>#{{ loan.Issue_ID }}</strong></td>
+          <td>
+            <div style="font-weight: 600; color: var(--dark);">{{ loan.Title }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Genre: {{ loan.Genre }}</div>
+          </td>
+          <td>
+            <div style="font-weight: 600;">{{ loan.Member_Name }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">ID: {{ loan.Member_ID }} &bull; {{ loan.Member_Phone }}</div>
+          </td>
+          <td>{{ loan.Issue_Date }}</td>
+          <td>
+            <span {% if loan.days_late > 0 %}style="color: var(--danger); font-weight: 700;"{% endif %}>
+              {{ loan.Due_Date }}
+            </span>
+          </td>
+          <td>
+            {% if loan.days_late > 0 %}
+              <span class="badge badge-danger">Overdue by {{ loan.days_late }} day{{ 's' if loan.days_late != 1 else '' }}</span>
+            {% else %}
+              <span class="badge badge-success">On Schedule ({{ -loan.days_late }} days left)</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if loan.fine_today > 0 %}
+              <span class="badge badge-warning" style="font-size: 0.85rem; font-weight: 700;">
+                ₹ {{ "%.2f"|format(loan.fine_today) }}
+              </span>
+            {% else %}
+              <span class="badge badge-secondary">₹ 0.00</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('process_return', issue_id=loan.Issue_ID) }}" onsubmit="return confirm('Confirm returning: {{ loan.Title }} from {{ loan.Member_Name }}?');">
+              <button type="submit" class="btn btn-sm btn-primary">
+                <span>🔄</span> Return
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+    <h3>No Books Currently on Loan</h3>
+    <p>All books in the collection are currently accounted for on the library shelves.</p>
+    <a href="{{ url_for('issue_book') }}" class="btn btn-primary" style="margin-top: 1rem;">Issue a Book</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

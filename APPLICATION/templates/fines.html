@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Fines Management{% endblock %}
+{% block header_title %}Circulation Desk &mdash; Fines & Payments{% endblock %}
+
+{% block content %}
+<!-- SUMMARY CARDS -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon amber">⏳</div>
+    <div class="stat-info">
+      <h3>₹ {{ "%.2f"|format(pending_total) }}</h3>
+      <p>Pending Fines</p>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">💵</div>
+    <div class="stat-info">
+      <h3>₹ {{ "%.2f"|format(collected_total) }}</h3>
+      <p>Collected Fines</p>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple">📑</div>
+    <div class="stat-info">
+      <h3>{{ fines|length }}</h3>
+      <p>Total Fine Invoices</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title"><span>💰</span> Fine Invoices</h2>
+      <p class="form-help">Sorted with Pending fines first, followed by settled payments. Fine rate: Rs. 5.00 per day late.</p>
+    </div>
+  </div>
+
+  <div class="actions-bar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="form-control" placeholder="Search member, book, or invoice..." data-table-search="finesTable">
+    </div>
+  </div>
+
+  {% if fines %}
+  <div class="table-responsive">
+    <table class="data-table" id="finesTable">
+      <thead>
+        <tr>
+          <th>Fine ID</th>
+          <th>Borrower</th>
+          <th>Book Title</th>
+          <th>Fine Amount</th>
+          <th>Reason</th>
+          <th>Payment Status</th>
+          <th>Payment Mode</th>
+          <th>Payment Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in fines %}
+        <tr>
+          <td><strong>#{{ f.Fine_ID }}</strong></td>
+          <td>
+            <div style="font-weight: 600;">{{ f.Member_Name }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Issue #{{ f.Issue_ID }}</div>
+          </td>
+          <td>{{ f.Title }}</td>
+          <td>
+            <strong style="font-size: 0.95rem; color: {% if f.Payment_Status == 'Pending' %}#b91c1c{% else %}#047857{% endif %};">
+              ₹ {{ "%.2f"|format(f.Fine_Amount) }}
+            </strong>
+          </td>
+          <td><span class="badge badge-secondary">{{ f.Fine_Reason }}</span></td>
+          <td>
+            {% if f.Payment_Status == 'Pending' %}
+              <span class="badge badge-danger">Pending</span>
+            {% else %}
+              <span class="badge badge-success">Paid</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if f.Payment_Mode %}
+              <span class="badge badge-info">{{ f.Payment_Mode }}</span>
+            {% else %}
+              <span style="color: var(--text-muted);">&mdash;</span>
+            {% endif %}
+          </td>
+          <td>{{ f.Payment_Date if f.Payment_Date else '&mdash;'|safe }}</td>
+          <td>
+            {% if f.Payment_Status == 'Pending' %}
+              <button type="button" 
+                      class="btn btn-sm btn-success" 
+                      data-open-modal="payFineModal"
+                      data-param-issue_id="{{ f.Issue_ID }}"
+                      data-param-member_name="{{ f.Member_Name }}"
+                      data-param-book_title="{{ f.Title }}"
+                      data-param-fine_amount="₹ {{ '%.2f'|format(f.Fine_Amount) }}">
+                <span>💵</span> Collect Payment
+              </button>
+            {% else %}
+              <span class="badge badge-success">Settled</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+    <h3>No Fines on Record</h3>
+    <p>There are no overdue penalties recorded in the system.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- PAY FINE MODAL -->
+<div class="modal-overlay" id="payFineModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><span>💵</span> Settle Fine Payment</h3>
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('pay_fine_route') }}" data-validate>
+      <div class="modal-body">
+        <input type="hidden" name="issue_id" value="">
+        
+        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.25rem;">
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Fine Details:</div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+            <span>Member:</span>
+            <strong data-display="member_name">-</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+            <span>Book:</span>
+            <strong data-display="book_title">-</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--border); padding-top: 0.5rem; margin-top: 0.5rem;">
+            <span style="font-weight: 700;">Amount Due:</span>
+            <strong style="color: var(--danger); font-size: 1.1rem;" data-display="fine_amount">₹ 0.00</strong>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="payment_mode">Payment Mode <span class="required">*</span></label>
+          <select name="payment_mode" id="payment_mode" class="form-select" required>
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI (Google Pay / PhonePe / Paytm)</option>
+            <option value="Card">Debit / Credit Card</option>
+          </select>
+          <span class="form-help">Executes procedure <code>pay_fine(issue_id, mode)</code> and updates payment status.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-success"><span>✅</span> Mark as Paid</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

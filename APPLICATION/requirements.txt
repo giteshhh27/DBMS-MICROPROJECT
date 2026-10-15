@@ -1,0 +1,5 @@
+# Library Management System - Dependencies
+# MSBTE K Scheme DMS 313302 Micro Project
+
+Flask>=3.0.0
+mysql-connector-python>=8.0.0

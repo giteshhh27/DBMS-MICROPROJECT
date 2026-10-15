@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Issue a Book{% endblock %}
+{% block header_title %}Circulation Desk &mdash; Issue Book{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+  
+  {% if confirmation %}
+  <!-- ISSUE CONFIRMATION CARD -->
+  <div class="confirmation-card">
+    <h3>✅ Book Issued Successfully</h3>
+    <p style="margin-bottom: 1rem; color: #1e3a8a;">A new loan record has been committed to the database. Please review the circulation slip details below:</p>
+    
+    <div class="confirmation-grid">
+      <div class="confirmation-item">
+        <div class="label">Book Title</div>
+        <div class="val">{{ confirmation.Book }}</div>
+      </div>
+      <div class="confirmation-item">
+        <div class="label">Issued To</div>
+        <div class="val">{{ confirmation.Member_Name }}</div>
+      </div>
+      <div class="confirmation-item">
+        <div class="label">Issue Date</div>
+        <div class="val">{{ confirmation.Issue_Date }}</div>
+      </div>
+      <div class="confirmation-item">
+        <div class="label">Due Date (14 Days)</div>
+        <div class="val" style="color: #b45309;">{{ confirmation.Due_Date }}</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('issue_book') }}" class="btn btn-primary btn-sm">Issue Another Book</a>
+      <a href="{{ url_for('return_book') }}" class="btn btn-outline btn-sm">Go to Return Desk</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ISSUE FORM CARD -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title"><span>📖</span> Issue Book to Member</h2>
+      <span class="badge badge-info">14-Day Loan Period</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('issue_book') }}" data-validate>
+      <div class="form-grid">
+        <!-- Member Selection -->
+        <div class="form-group">
+          <label class="form-label" for="member_id">Select Member <span class="required">*</span></label>
+          <select name="member_id" id="member_id" class="form-select" required>
+            <option value="">-- Choose Member --</option>
+            {% for m in members %}
+              <option value="{{ m.Member_ID }}" {% if selected_member_id == m.Member_ID %}selected{% endif %}>
+                {{ m.Member_Name }} (ID: {{ m.Member_ID }} &bull; {{ m.Member_Email }})
+              </option>
+            {% endfor %}
+          </select>
+          <span class="form-help">Rule: Member can hold a maximum of 3 active books at any time.</span>
+        </div>
+
+        <!-- Book Selection -->
+        <div class="form-group">
+          <label class="form-label" for="book_id">Select Book <span class="required">*</span></label>
+          <select name="book_id" id="book_id" class="form-select" required>
+            <option value="">-- Choose Book --</option>
+            {% for b in books %}
+              <option value="{{ b.Book_ID }}" {% if b.Available_Quantity <= 0 %}style="color: #991b1b; background-color: #fef2f2;"{% endif %} {% if selected_book_id == b.Book_ID %}selected{% endif %}>
+                {{ b.Title }} &mdash; by {{ b.Author_Name }} [{{ b.Available_Quantity }} available]
+                {% if b.Available_Quantity <= 0 %}(OUT OF STOCK){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+          <span class="form-help">Rule: Same member cannot issue the same book twice without returning it.</span>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+        <button type="reset" class="btn btn-outline">Reset Form</button>
+        <button type="submit" class="btn btn-primary"><span>📖</span> Confirm & Issue Book</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ACTIVE RULES NOTICE -->
+  <div class="card" style="background: #f8fafc; border-left: 4px solid #3b82f6;">
+    <h3 style="font-size: 0.95rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem;">Database Business Rules Enforced:</h3>
+    <ul style="padding-left: 1.25rem; font-size: 0.85rem; color: #475569; display: flex; flex-direction: column; gap: 0.35rem;">
+      <li><strong>Maximum 3 Books:</strong> A member cannot be issued more than 3 active books at once.</li>
+      <li><strong>No Duplicate Issues:</strong> The same book cannot be issued again to the same member before it is returned.</li>
+      <li><strong>Stock Check:</strong> Books with 0 available copies are immediately rejected.</li>
+      <li><strong>Atomicity:</strong> All issues execute via transaction with row locking in procedure <code>issue_book</code>.</li>
+    </ul>
+  </div>
+
+</div>
+{% endblock %}

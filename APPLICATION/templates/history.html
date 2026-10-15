@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Issue History{% endblock %}
+{% block header_title %}Circulation History & Records{% endblock %}
+
+{% block content %}
+<div class="tabs-container">
+  <div class="tabs-nav">
+    <button class="tab-btn active" data-tab-target="tabCurrent">
+      <span>📖</span> Currently Issued Books (View)
+    </button>
+    <button class="tab-btn" data-tab-target="tabAll">
+      <span>📜</span> Complete Loan History
+    </button>
+  </div>
+
+  <!-- TAB 1: CURRENTLY ISSUED BOOKS (VIEW) -->
+  <div class="tab-pane" id="tabCurrent" style="display: block;">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title"><span>📖</span> Active Circulation View</h2>
+          <p class="form-help">Populated directly from MySQL database view: <code>Current_Issued_Books</code></p>
+        </div>
+        <span class="badge badge-info">{{ current_issues|length }} Active Loan{{ 's' if current_issues|length != 1 else '' }}</span>
+      </div>
+
+      <div class="actions-bar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="form-control" placeholder="Search active issues..." data-table-search="currentIssuesTable">
+        </div>
+      </div>
+
+      {% if current_issues %}
+      <div class="table-responsive">
+        <table class="data-table" id="currentIssuesTable">
+          <thead>
+            <tr>
+              <th>Issue ID</th>
+              <th>Member Name</th>
+              <th>Book Title</th>
+              <th>Issue Date</th>
+              <th>Due Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for issue in current_issues %}
+            <tr>
+              <td><strong>#{{ issue.Issue_ID }}</strong></td>
+              <td><strong>{{ issue.Member_Name }}</strong></td>
+              <td>{{ issue.Title }}</td>
+              <td>{{ issue.Issue_Date }}</td>
+              <td>{{ issue.Due_Date }}</td>
+              <td><span class="badge badge-warning">Issued</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p style="text-align: center; color: var(--text-muted); padding: 2rem;">No active book loans at present.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- TAB 2: COMPLETE ISSUE HISTORY -->
+  <div class="tab-pane" id="tabAll" style="display: none;">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title"><span>📜</span> Complete Issue & Return Archive</h2>
+          <p class="form-help">Historical records of all book loans, returns, and associated penalties.</p>
+        </div>
+        <span class="badge badge-secondary">{{ all_issues|length }} Total Records</span>
+      </div>
+
+      <div class="actions-bar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="form-control" placeholder="Search archive records..." data-table-search="allIssuesTable">
+        </div>
+      </div>
+
+      {% if all_issues %}
+      <div class="table-responsive">
+        <table class="data-table" id="allIssuesTable">
+          <thead>
+            <tr>
+              <th>Issue ID</th>
+              <th>Member</th>
+              <th>Book</th>
+              <th>Issue Date</th>
+              <th>Due Date</th>
+              <th>Return Date</th>
+              <th>Status</th>
+              <th>Fine Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in all_issues %}
+            <tr>
+              <td><strong>#{{ row.Issue_ID }}</strong></td>
+              <td>{{ row.Member_Name }}</td>
+              <td>{{ row.Title }}</td>
+              <td>{{ row.Issue_Date }}</td>
+              <td>{{ row.Due_Date }}</td>
+              <td>{{ row.Return_Date if row.Return_Date else '&mdash;'|safe }}</td>
+              <td>
+                {% if row.Status == 'Issued' %}
+                  <span class="badge badge-warning">Issued</span>
+                {% else %}
+                  <span class="badge badge-success">Returned</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if row.Fine_Amount and row.Fine_Amount > 0 %}
+                  <span class="badge badge-danger">₹ {{ "%.2f"|format(row.Fine_Amount) }} ({{ row.Payment_Status }})</span>
+                {% else %}
+                  <span style="color: var(--text-muted);">&mdash;</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p style="text-align: center; color: var(--text-muted); padding: 2rem;">No history records found.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

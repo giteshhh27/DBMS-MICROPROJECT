@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Overdue Loans{% endblock %}
+{% block header_title %}Circulation Desk &mdash; Overdue Loans{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title"><span>⏰</span> Overdue Book Loans</h2>
+      <p class="form-help">
+        Retrieved via database stored procedure <code>list_overdue_books()</code> using an explicit cursor with a <code>NOT FOUND</code> handler.
+      </p>
+    </div>
+    <span class="badge badge-danger">{{ overdue_books|length }} Overdue</span>
+  </div>
+
+  <div class="actions-bar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="form-control" placeholder="Search borrower or title..." data-table-search="overdueTable">
+    </div>
+  </div>
+
+  {% if overdue_books %}
+  <div class="table-responsive">
+    <table class="data-table" id="overdueTable">
+      <thead>
+        <tr>
+          <th>Issue ID</th>
+          <th>Borrower</th>
+          <th>Book Title</th>
+          <th>Due Date</th>
+          <th>Days Late</th>
+          <th>Accrued Fine (₹5/day)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in overdue_books %}
+        <tr>
+          <td><strong>#{{ b.Issue_ID }}</strong></td>
+          <td><strong>{{ b.Member_Name }}</strong></td>
+          <td>{{ b.Book_Title }}</td>
+          <td><span style="color: var(--danger); font-weight: 600;">{{ b.Due_Date }}</span></td>
+          <td>
+            <span class="badge badge-danger">{{ b.Days_Late }} day{{ 's' if b.Days_Late != 1 else '' }}</span>
+          </td>
+          <td>
+            <strong style="color: #b91c1c;">₹ {{ "%.2f"|format(b.Days_Late * 5.0) }}</strong>
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('process_return', issue_id=b.Issue_ID) }}" onsubmit="return confirm('Process return for overdue book: {{ b.Book_Title }}?');">
+              <button type="submit" class="btn btn-sm btn-primary">
+                <span>🔄</span> Return Now
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+    <h3>No Overdue Loans!</h3>
+    <p>All borrowed books are within their active 14-day borrowing window.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

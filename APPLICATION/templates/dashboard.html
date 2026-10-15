@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block header_title %}Library Overview Dashboard{% endblock %}
+
+{% block content %}
+<!-- KPI METRIC CARDS -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue">📚</div>
+    <div class="stat-info">
+      <h3>{{ total_titles }}</h3>
+      <p>Book Titles</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon green">📖</div>
+    <div class="stat-info">
+      <h3>{{ shelf_copies }}</h3>
+      <p>Copies on Shelf</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon amber">🤝</div>
+    <div class="stat-info">
+      <h3>{{ books_on_loan }}</h3>
+      <p>Books on Loan</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon red">⏰</div>
+    <div class="stat-info">
+      <h3>{{ overdue_count }}</h3>
+      <p>Overdue Loans</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon purple">💰</div>
+    <div class="stat-info">
+      <h3>₹ {{ "%.2f"|format(pending_fines) }}</h3>
+      <p>Pending Fines</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon teal">⚠️</div>
+    <div class="stat-info">
+      <h3>{{ low_stock_books|length }}</h3>
+      <p>Low Stock Titles</p>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK ACTIONS BAR -->
+<div class="card" style="padding: 1.25rem 1.5rem;">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h3 style="font-size: 1rem; color: var(--dark); margin-bottom: 0.2rem;">Quick Circulation Desk Actions</h3>
+      <p class="form-help">Perform common daily library tasks in one click.</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="{{ url_for('issue_book') }}" class="btn btn-primary btn-sm"><span>📖</span> Issue Book</a>
+      <a href="{{ url_for('return_book') }}" class="btn btn-secondary btn-sm"><span>🔄</span> Return Book</a>
+      <a href="{{ url_for('fines') }}" class="btn btn-outline btn-sm"><span>💰</span> Collect Fines</a>
+      <a href="{{ url_for('books') }}" class="btn btn-outline btn-sm"><span>📘</span> Add New Book</a>
+      <a href="{{ url_for('members') }}" class="btn btn-outline btn-sm"><span>👥</span> Add Member</a>
+    </div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem;">
+  
+  <!-- LOW STOCK TITLES -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title"><span>⚠️</span> Books Running Low on Copies</h3>
+      <span class="badge badge-warning">&le; 2 Copies Remaining</span>
+    </div>
+    {% if low_stock_books %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Total Copies</th>
+            <th>Available</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in low_stock_books %}
+          <tr>
+            <td><strong>{{ b.Title }}</strong></td>
+            <td>{{ b.Author_Name }}</td>
+            <td>{{ b.Quantity }}</td>
+            <td>
+              <strong style="color: {% if b.Available_Quantity == 0 %}var(--danger){% else %}var(--warning){% endif %};">
+                {{ b.Available_Quantity }}
+              </strong>
+            </td>
+            <td>
+              {% if b.Available_Quantity == 0 %}
+                <span class="badge badge-danger">Out of Stock</span>
+              {% else %}
+                <span class="badge badge-warning">Low Stock</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 1.5rem;">All book titles have healthy inventory levels (&gt; 2 copies).</p>
+    {% endif %}
+  </div>
+
+  <!-- RECENT SYSTEM ACTIVITY / AUDIT LOG -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title"><span>🛡️</span> Database Trigger Activity</h3>
+      <a href="{{ url_for('audit_log') }}" class="btn btn-sm btn-outline">View All</a>
+    </div>
+    {% if recent_activity %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Action Description</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for act in recent_activity %}
+          <tr>
+            <td>#{{ act.Log_ID }}</td>
+            <td>{{ act.Action_Description }}</td>
+            <td style="color: var(--text-muted); font-size: 0.8rem;">{{ act.Log_Time }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No trigger events logged yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

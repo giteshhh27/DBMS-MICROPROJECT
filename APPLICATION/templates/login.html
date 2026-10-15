@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Login - College Library Management System</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      padding: 1rem;
+    }
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+    }
+    .login-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 2.25rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .login-icon {
+      font-size: 2.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .login-header h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--dark);
+    }
+    .login-header p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+    .demo-creds {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-icon">📚</div>
+        <h1>Library Staff Portal</h1>
+        <p>College DBMS Micro Project (MSBTE K Scheme)</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages" style="margin-bottom: 1.25rem;">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">{{ message }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('login') }}" data-validate>
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label class="form-label" for="username">Staff Username</label>
+          <input type="text" name="username" id="username" class="form-control" placeholder="admin" value="admin" required autofocus>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label class="form-label" for="password">Password</label>
+          <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" value="admin123" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+          <span>🔐</span> Sign In to Circulation Desk
+        </button>
+      </form>
+
+      <div class="demo-creds">
+        <strong>Demo Login Credentials:</strong><br>
+        Username: <code>admin</code><br>
+        Password: <code>admin123</code>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

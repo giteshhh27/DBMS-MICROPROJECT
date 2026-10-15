@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Library Management System{% endblock %} - DMS 313302</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar" id="sidebar">
+    <a href="{{ url_for('dashboard') }}" class="sidebar-brand">
+      <div class="sidebar-brand-icon">📚</div>
+      <div class="sidebar-brand-text">
+        <h2>College LMS</h2>
+        <span>Library Management</span>
+      </div>
+    </a>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Core Circulation</div>
+      <a href="{{ url_for('dashboard') }}" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
+        <span class="icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('issue_book') }}" class="nav-link {% if active_page == 'issue' %}active{% endif %}">
+        <span class="icon">📖</span>
+        <span>Issue Book</span>
+      </a>
+      <a href="{{ url_for('return_book') }}" class="nav-link {% if active_page == 'return' %}active{% endif %}">
+        <span class="icon">🔄</span>
+        <span>Return Book</span>
+      </a>
+      <a href="{{ url_for('fines') }}" class="nav-link {% if active_page == 'fines' %}active{% endif %}">
+        <span class="icon">💰</span>
+        <span>Fines Management</span>
+      </a>
+      <a href="{{ url_for('overdue') }}" class="nav-link {% if active_page == 'overdue' %}active{% endif %}">
+        <span class="icon">⏰</span>
+        <span>Overdue Loans</span>
+        {% if overdue_count and overdue_count > 0 %}
+          <span class="nav-badge">{{ overdue_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('history') }}" class="nav-link {% if active_page == 'history' %}active{% endif %}">
+        <span class="icon">📜</span>
+        <span>Issue History</span>
+      </a>
+
+      <div class="nav-section-title">Catalog & Members</div>
+      <a href="{{ url_for('books') }}" class="nav-link {% if active_page == 'books' %}active{% endif %}">
+        <span class="icon">📘</span>
+        <span>Books</span>
+      </a>
+      <a href="{{ url_for('members') }}" class="nav-link {% if active_page == 'members' %}active{% endif %}">
+        <span class="icon">👥</span>
+        <span>Members</span>
+      </a>
+      <a href="{{ url_for('authors') }}" class="nav-link {% if active_page == 'authors' %}active{% endif %}">
+        <span class="icon">✍️</span>
+        <span>Authors</span>
+      </a>
+      <a href="{{ url_for('publishers') }}" class="nav-link {% if active_page == 'publishers' %}active{% endif %}">
+        <span class="icon">🏢</span>
+        <span>Publishers</span>
+      </a>
+
+      <div class="nav-section-title">Database & System</div>
+      <a href="{{ url_for('audit_log') }}" class="nav-link {% if active_page == 'audit' %}active{% endif %}">
+        <span class="icon">🛡️</span>
+        <span>Trigger Audit Log</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div>
+        <strong>Staff:</strong> {{ session.get('staff_user', 'Guest') }}
+      </div>
+      {% if session.get('logged_in') %}
+        <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline" style="color: #cbd5e1; border-color: #334155;">Logout</a>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline" style="color: #cbd5e1; border-color: #334155;">Login</a>
+      {% endif %}
+    </div>
+  </aside>
+
+  <!-- MAIN WRAPPER -->
+  <div class="main-wrapper">
+    <header class="top-bar">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">☰</button>
+        <h1 class="top-bar-title">{% block header_title %}Library Management System{% endblock %}</h1>
+      </div>
+      <div class="top-bar-user">
+        <span class="user-badge">
+          <span>👤</span>
+          <span>{{ session.get('staff_user', 'Staff Admin') }}</span>
+        </span>
+      </div>
+    </header>
+
+    <main class="content-container">
+      <!-- FLASH NOTIFICATIONS -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                <span class="alert-icon">
+                  {% if category == 'success' %}✅
+                  {% elif category == 'danger' or category == 'error' %}⚠️
+                  {% elif category == 'warning' %}🔔
+                  {% else %}ℹ️{% endif %}
+                </span>
+                <div class="alert-content">{{ message }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- PAGE CONTENT -->
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

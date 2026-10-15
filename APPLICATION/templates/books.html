@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Books Catalog{% endblock %}
+{% block header_title %}Catalog &mdash; Manage Books{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title"><span>📘</span> Library Book Catalog</h2>
+      <p class="form-help">Manage books, titles, genres, and stock quantities. New books start with all copies available.</p>
+    </div>
+    <button type="button" class="btn btn-primary" data-open-modal="addBookModal">
+      <span>➕</span> Add New Book
+    </button>
+  </div>
+
+  <div class="actions-bar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="form-control" placeholder="Search title, author, genre..." data-table-search="booksTable">
+    </div>
+    <span class="badge badge-info">{{ books|length }} Titles in Catalog</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="data-table" id="booksTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Publisher</th>
+          <th>Genre</th>
+          <th>Total Copies</th>
+          <th>Available</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in books %}
+        <tr>
+          <td><strong>#{{ b.Book_ID }}</strong></td>
+          <td><strong>{{ b.Title }}</strong></td>
+          <td>{{ b.Author_Name }}</td>
+          <td>{{ b.Publisher_Name }}</td>
+          <td><span class="badge badge-secondary">{{ b.Genre }}</span></td>
+          <td>{{ b.Quantity }}</td>
+          <td>
+            <strong style="color: {% if b.Available_Quantity == 0 %}var(--danger){% elif b.Available_Quantity <= 2 %}var(--warning){% else %}var(--success){% endif %};">
+              {{ b.Available_Quantity }}
+            </strong>
+          </td>
+          <td>
+            {% if b.Available_Quantity == 0 %}
+              <span class="badge badge-danger">Out of Stock</span>
+            {% elif b.Available_Quantity <= 2 %}
+              <span class="badge badge-warning">Low Stock</span>
+            {% else %}
+              <span class="badge badge-success">Available</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.4rem;">
+              <button type="button" 
+                      class="btn btn-sm btn-outline"
+                      data-open-modal="editBookModal"
+                      data-param-book_id="{{ b.Book_ID }}"
+                      data-param-title="{{ b.Title }}"
+                      data-param-author_id="{{ b.Author_ID }}"
+                      data-param-publisher_id="{{ b.Publisher_ID }}"
+                      data-param-genre="{{ b.Genre }}"
+                      data-param-quantity="{{ b.Quantity }}"
+                      data-param-available="{{ b.Available_Quantity }}">
+                ✏️ Edit
+              </button>
+              <form method="POST" action="{{ url_for('delete_book', book_id=b.Book_ID) }}" onsubmit="return confirm('Are you sure you want to delete book: {{ b.Title }}?');">
+                <button type="submit" class="btn btn-sm btn-outline" style="color: var(--danger); border-color: var(--danger-border);">
+                  🗑️
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADD BOOK MODAL -->
+<div class="modal-overlay" id="addBookModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><span>➕</span> Add New Book to Collection</h3>
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('add_book') }}" data-validate>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" for="add_title">Book Title <span class="required">*</span></label>
+          <input type="text" name="title" id="add_title" class="form-control" placeholder="e.g. Modern Operating Systems" required>
+        </div>
+
+        <div class="form-grid" style="margin-bottom: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="add_author">Author <span class="required">*</span></label>
+            <select name="author_id" id="add_author" class="form-select" required>
+              <option value="">-- Select Author --</option>
+              {% for a in authors %}
+                <option value="{{ a.Author_ID }}">{{ a.Author_Name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="add_publisher">Publisher <span class="required">*</span></label>
+            <select name="publisher_id" id="add_publisher" class="form-select" required>
+              <option value="">-- Select Publisher --</option>
+              {% for p in publishers %}
+                <option value="{{ p.Publisher_ID }}">{{ p.Publisher_Name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="add_genre">Genre / Category <span class="required">*</span></label>
+            <input type="text" name="genre" id="add_genre" class="form-control" placeholder="e.g. Computer Science" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="add_quantity">Total Copies <span class="required">*</span></label>
+            <input type="number" name="quantity" id="add_quantity" class="form-control" min="1" value="5" required>
+            <span class="form-help">Initial available copies will be set to this total.</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Book</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT BOOK MODAL -->
+<div class="modal-overlay" id="editBookModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><span>✏️</span> Edit Book Details</h3>
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('edit_book') }}" data-validate>
+      <div class="modal-body">
+        <input type="hidden" name="book_id" value="">
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" for="edit_title">Book Title <span class="required">*</span></label>
+          <input type="text" name="title" id="edit_title" class="form-control" required>
+        </div>
+
+        <div class="form-grid" style="margin-bottom: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="edit_author">Author <span class="required">*</span></label>
+            <select name="author_id" id="edit_author" class="form-select" required>
+              {% for a in authors %}
+                <option value="{{ a.Author_ID }}">{{ a.Author_Name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit_publisher">Publisher <span class="required">*</span></label>
+            <select name="publisher_id" id="edit_publisher" class="form-select" required>
+              {% for p in publishers %}
+                <option value="{{ p.Publisher_ID }}">{{ p.Publisher_Name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="edit_genre">Genre / Category <span class="required">*</span></label>
+            <input type="text" name="genre" id="edit_genre" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit_quantity">Total Copies <span class="required">*</span></label>
+            <input type="number" name="quantity" id="edit_quantity" class="form-control" min="1" required>
+            <span class="form-help">Adjusting total copies automatically updates available count.</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Book</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
